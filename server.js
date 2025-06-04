@@ -41,15 +41,10 @@ const systemPrompt = `
     "result": false
 }
 \`\`\`
-
 `;
 
 async function validateController(req, res) {
   const { question, correctAnswer, userAnswer } = req.body;
-  //   const question = 'const name = "Bob"; name = "Carl";';
-  //   const correctAnswer =
-  //     'В javascript нельзя менять значение переменной, которая была объялена через const';
-  //   const userAnswer = 'нужно объявлять через var, так как const нельзя менять';
   const response = await giga.invoke([
     new SystemMessage(systemPrompt),
     new HumanMessage(
@@ -62,8 +57,6 @@ async function validateController(req, res) {
   console.log(json);
   res.json(json);
 }
-
-// validateController();
 
 app.post('/validate-answer', validateController);
 
