@@ -2,9 +2,11 @@ const { GigaChat } = require('langchain-gigachat');
 const { HumanMessage, SystemMessage } = require('@langchain/core/messages');
 const express = require('express');
 const { Agent } = require('https');
+const cors = require('cors');
 const app = express();
 require('dotenv').config();
 
+app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {

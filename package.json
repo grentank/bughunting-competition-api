@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@langchain/core": "^0.3.57",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "langchain-gigachat": "^0.0.13",
