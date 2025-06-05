@@ -1,5 +1,5 @@
 const { GigaChat } = require('langchain-gigachat');
-const { HumanMessage, SystemMessage } = require('@langchain/core/messages');
+const { HumanMessage, SystemMessage, AIMessage } = require('@langchain/core/messages');
 const express = require('express');
 const { Agent } = require('https');
 const cors = require('cors');
@@ -24,13 +24,34 @@ const giga = new GigaChat({
   httpsAgent,
 });
 
-const systemPrompt = `
-Ты являешься AI ассистентом, который проверяет ответы пользователей на задания.
-Задания заключаются в том, чтобы найти ошибку в коде, написанному на javascript.
-Сам код проверять не нужно, в нём точно будет ошибка. Тебе будет дан правильный ответ, который ожидается от пользователя.
-Пользователь не будет вводить точный символ-в-символ, что дано в правильном ответе, он будет вводить текст, который описывает, в чём ошибка.
-Ты должен проверить, совпадает ли ответ пользователя с правильным ответом.
-Если совпадает, то верни json объект с полем result. 
+async function validateController(req, res) {
+  const { question, correctAnswer, userAnswer } = req.body;
+  const systemPrompt = `
+Ты являешься AI ассистентом, который проверяет ответ пользователя на задание.
+Задание заключается в том, чтобы найти ошибку в коде на javascript.
+Анализировать код тебе не нужно, а нужно проверить, совпадает ли ответ пользователя с правильным ответом.
+
+### Фрагмент кода
+
+\`\`\`js
+${question}
+\`\`\`
+
+### Причина, почему этот код не работает
+
+${correctAnswer}
+
+### Что от тебя потребуется
+
+Ниже будет ответ пользователя, который попробует описать, почему код неверный.
+Ответ пользователя не будет точно совпадать символ-в-символ с правильным ответом.
+Тем не менее, ты должен проверить, совпадает ли по смыслу ответ пользователя с правильным ответом.
+Пользователь должен описать механизм ошибки, почему код неверный.
+Если пользователь просто указал на ошибку, но не описал механику -- это неверный ответ.
+
+### Формат ответа
+
+Всегда возвращай json объект с булевым полем result. 
 Если ответ пользователя совпадает с правильным ответом или ответ пользователя близок по смыслу к правильному ответу, то верни верни json объект с полем result: true, то есть:
 \`\`\`json
 {
@@ -44,14 +65,9 @@ const systemPrompt = `
 }
 \`\`\`
 `;
-
-async function validateController(req, res) {
-  const { question, correctAnswer, userAnswer } = req.body;
   const response = await giga.invoke([
     new SystemMessage(systemPrompt),
-    new HumanMessage(
-      `Изначальный код: ${question}\nПравильный ответ: ${correctAnswer}\nОтвет пользователя: ${userAnswer}`,
-    ),
+    new HumanMessage(`Мой ответ, почему вышеуказанный код неверный: ${userAnswer}`),
   ]);
   console.log(response.content);
   const parseMarkdown = response.content.replace(/```json/g, '').replace(/```.{0,}/g, '');
